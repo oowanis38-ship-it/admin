@@ -629,7 +629,7 @@
             document.getElementById('totalPriceDisplay').innerText = total + " DA";
         }
 
-        // إرسال الطلب إلى Google Apps Script Web App الخاص بك
+        // دالة إرسال الطلب المحدثة والمطابقة لسكربت غوغل الجديد (JSON خام)
         function confirmOrder(e) {
             e.preventDefault();
             
@@ -645,37 +645,28 @@
             submitBtn.innerText = "جاري الحفظ في النظام...";
             submitBtn.disabled = true;
 
-            // تجهيز البيانات لإرسالها
+            // 1. هيكلة البيانات بنفس الأسماء التي تنتظرها دالة doPost في السكربت الخاص بك
             const orderData = {
-                productName: currentProductName,
-                productPrice: currentProductPrice + " DA",
-                productColor: color, 
-                productSize: size,   
-                customerName: name,
+                name: name,
+                product: currentProductName,
+                color: color,
+                size: size,
                 wilaya: wilaya,
-                commune: commune,
-                address: address,
-                shippingType: currentShippingCost === 800 ? "توصيل للمنزل" : "توصيل للمكتب",
-                shippingCost: currentShippingCost + " DA",
-                totalPrice: finalTotal + " DA",
-                orderDate: new Date().toLocaleString('ar-DZ')
+                address: `${commune} - ${address}`, // دمج البلدية مع العنوان في خانة واحدة
+                total: finalTotal + " DA"
             };
 
-            // رابط الـ Web App الخاص بك
+            // رابط الـ Web App المباشر الخاص بك
             const scriptUrl = "https://script.google.com/macros/s/AKfycbzrbfDk959jKBnkBcqeHkS6SFId-sPH2QSWNhDnOCqU4atrrnOp9EbdUxkZh-xAjuZvwA/exec";
 
-            // إرسال البيانات بطريقة تجنب مشاكل الـ CORS في المتصفحات
+            // 2. إرسال البيانات بصيغة نص JSON نقي لتفكيكه مباشرة في غوغل شيت ولتفادي مشاكل الـ CORS
             fetch(scriptUrl, {
                 method: "POST",
                 mode: "no-cors",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: new URLSearchParams(orderData)
+                body: JSON.stringify(orderData) // تحويل الكائن برمجياً إلى نص
             })
             .then(() => {
-                // بما أن الوضع no-cors سيتم تنفيذ التنبيه بمجرد نجاح الإرسال دون انتظار رد تفصيلي
-                alert(`🎉 شكراً لك ${name}!\nتم تسجيل طلبك بنجاح للون (${color}) ومقاس (${size}).\nالمبلغ الإجمالي عند الاستلام: ${finalTotal} DA`);
+                alert(`🎉 شكراً لك ${name}!\nتم تسجيل طلبك بنجاح في النظام.`);
                 closeCheckout();
             })
             .catch((error) => {
